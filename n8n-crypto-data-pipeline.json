@@ -1,0 +1,233 @@
+{
+  "name": "Week 18 Building a Data Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.coinlore.net/api/tickers/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start",
+              "value": "0"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -48,
+        -48
+      ],
+      "id": "6c51d384-5278-4ff9-b682-f0ce814c50c2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# Loop over input items and add a new field called 'my_new_field' to the JSON of each one\n\ncoins = _items[0]['json']['data']\n\nnew_data = []\n\n \ntry:\n  for coin in coins:\n    price = round(float(coin['price_usd']),2)\n\n    new_data.append({\n      \"json\":{\n        \"id\" : coin[\"id\"],\n        'Name' : coin['name'],\n        'Name id' :coin['nameid'],\n        'Rank':coin['rank'],\n        'Symbol': coin['symbol'],\n        'Price Usd': price\n     }\n  })\nexcept Exception as error:\n  print(\"Code Failed\",error)\n  raise error\n\n\nreturn new_data"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -48
+      ],
+      "id": "27e65eae-bfaa-4bc3-9d18-5babb402ff96",
+      "name": "Code in Python"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1CXe91GVZIRAn8ktVrLUC2CFho8K67lUj25d7iMwZqoM",
+          "mode": "list",
+          "cachedResultName": "bitcoin rate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CXe91GVZIRAn8ktVrLUC2CFho8K67lUj25d7iMwZqoM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CXe91GVZIRAn8ktVrLUC2CFho8K67lUj25d7iMwZqoM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Name": "={{ $json.Name }}",
+            "Name id ": "={{ $json['Name id'] }}",
+            "Rank": "={{ $json.Rank }}",
+            "Symbol": "={{ $json.Symbol }}",
+            "Price Usd": "={{ $json['Price Usd'] }}",
+            "Date": "={{ $now.setZone('Asia/Karachi').toFormat('dd-MM-yyyy HH:mm:ss') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name id ",
+              "displayName": "Name id ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Symbol",
+              "displayName": "Symbol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Price Usd",
+              "displayName": "Price Usd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        -48
+      ],
+      "id": "e6d39481-fcda-47ee-abbe-7070e483b0b2",
+      "name": "Append row in sheet",
+      "retryOnFail": true,
+      "notesInFlow": false,
+      
+      "onError": "continueErrorOutput",
+      "notes": "workflow in trubel !"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -272,
+        -112
+      ],
+      "id": "5bc54fa0-190d-4ada-a766-2d5c0684e1b2",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "3Fz1yZpkbIiJ7QXh",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "11e92080-83b3-489f-acf0-bf85b95f8af7",
+  
+  "nodeGroups": [],
+  "id": "rBSsWqcQvMtKNGSF",
+  "tags": []
+}
